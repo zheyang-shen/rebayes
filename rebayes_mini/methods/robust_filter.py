@@ -377,14 +377,11 @@ class ExtendedKalmanFilterMD(ExtendedKalmanFilter):
         self.threshold = threshold
         self.observation_precision = jnp.linalg.inv(self.observation_covariance)
 
-    def _update(self, bel, y, x):
+    def _update(self, bel, y, x , yhat, Ht, Rt):
         # TODO: Refactor with new API
-        err = y - self.vobs_fn(bel.mean, x)
+        err = y - yhat
         mahalanobis_distance = jnp.sqrt(jnp.einsum("j,jk,k->", err, self.observation_precision, err))
         weighting_term = (mahalanobis_distance < self.threshold).astype(float)
-
-        Ht = self.jac_obs(bel.mean, x)
-        Rt = self.observation_covariance
 
         St = Ht @ bel.cov @ Ht.T + Rt
         Kt = jnp.linalg.solve(St, Ht @ bel.cov).T
@@ -556,7 +553,7 @@ class ExtendedKalmanFilterBernoulli(ExtendedKalmanFilter):
         return B
 
     def step(self, bel, y, x, callback_fn):
-        bel_pred = self._predict_step(bel)
+        bel_pred = self._predict(bel)
         bel = bel_pred.replace(pr_inlier=1.0, tau=1.0)
         _inner = partial(self._inner_update, bel_pred=bel_pred, y=y, x=x)
         bel_update = jax.lax.fori_loop(0, self.n_inner, _inner, bel)
