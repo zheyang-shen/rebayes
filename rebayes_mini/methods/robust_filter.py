@@ -602,4 +602,3 @@ class FifoSGDIMQ(FifoSGD):
         # Do not count inner steps as part of the outer step
         _, bel = self._train_step(bel, weighting_term)
         return bel
-
