@@ -404,10 +404,10 @@ class ExtendedKalmanFilterIMQ(ExtendedKalmanFilter):
     def step(self, bel, y, x, callback_fn):
         bel_pred = self._predict(bel)
 
-        yhat = self.vobs_fn(bel.mean, x)
+        yhat = self.vobs_fn(bel_pred.mean, x)
         err = y - yhat
         weighting_term = self.soft_threshold ** 2 / (self.soft_threshold ** 2 + jnp.inner(err, err))
-        Ht = self.jac_obs(bel.mean, x)
+        Ht = self.jac_obs(bel_pred.mean, x)
         Rt = self.observation_covariance / weighting_term
 
         bel_update = self._update(bel_pred, y, x, yhat, Ht, Rt)
